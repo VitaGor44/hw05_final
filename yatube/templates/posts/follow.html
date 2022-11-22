@@ -4,7 +4,7 @@
 {% block content %}
 {% load cache %}
   <div class="container">
-    {% include "includes/menu.html" %}
+    {% include 'includes/switcher.html' %}
     <!-- Вывод ленты записей -->
 
     {% cache 20 index_page with page %}

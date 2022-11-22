@@ -1,10 +1,35 @@
 {% extends 'base.html' %}
+{% load thumbnail %}
 {% block title %} {{ author.get_full_name }} профайл пользователя  {% endblock %}
 {% block content %}
-{% load thumbnail %}
 
-<h1>Все посты пользователя {{ author.get_full_name }} </h1>
-<h3>Всего постов: {{ count }} </h3>
+
+  <div class="mb-5">
+      <h1>Все посты пользователя
+        {% if author.get_full_name %}
+          {{ author.get_full_name }}
+        {% else %}
+          {{ author }}
+        {% endif %}
+      </h1>
+      <h3>Всего постов: {{ count }}</h3>
+      {% if following %}
+        <a
+          class="btn btn-lg btn-light"
+          href="{% url 'posts:profile_unfollow' author %}" role="button"
+        >
+          Отписаться
+        </a>
+      {% else %}
+        <a
+          class="btn btn-lg btn-primary"
+          href="{% url 'posts:profile_follow' author %}" role="button"
+        >
+          Подписаться
+        </a>
+      {% endif %}
+    </div>
+
   {% for post in page_obj %}
     <article>
       <ul>

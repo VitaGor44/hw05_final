@@ -8,9 +8,9 @@ app_name = 'posts'
 urlpatterns = [
     path("", views.index, name="index"),
     path("follow/", views.follow_index, name="follow_index"),
-    path("<str:username>/follow/", views.profile_follow,
+    path("profile/<str:username>/follow/", views.profile_follow,
          name="profile_follow"),
-    path("<str:username>/unfollow/", views.profile_unfollow,
+    path("profile/<str:username>/unfollow/", views.profile_unfollow,
          name="profile_unfollow"),
     path("group/<slug:slug>/", views.group_posts, name="group_list"),
     # Профайл пользователя

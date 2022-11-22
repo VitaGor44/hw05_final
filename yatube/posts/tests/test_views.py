@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.cache import cache
 
+from posts.apps import PostsConfig
 from ..models import Group, Post, User, Follow
 
 
@@ -15,6 +16,32 @@ class PostPagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+
+        # Создадим запись в БД:
+        cls.user = User.objects.create(
+            first_name="test_name",
+            last_name="test_family_name",
+            username="test_user",
+            email="test_user@test_site.ru"
+        )
+        cls.user_2 = User.objects.create(
+            username="test_user_2",
+        )
+        cls.user_3 = User.objects.create(
+            username="test_user_3",
+        )
+        cls.group = Group.objects.create(
+            title="Тест | Название",
+            description="Тест | Описание группы",
+            slug="test-slug"
+        )
+        cls.group_2 = Group.objects.create(
+            title="Тест | Название 2",
+            description="Тест | Описание группы 2",
+            slug="test-slug-2"
+        )
+
+
         settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
@@ -24,11 +51,12 @@ class PostPagesTests(TestCase):
             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
             b'\x0A\x00\x3B'
         )
-        uploaded = SimpleUploadedFile(
+        cls.uploaded = SimpleUploadedFile(
             name='small.gif',
             content=small_gif,
             content_type='image/gif'
         )
+        cls.post_on_page = PostsConfig.pages_on_list
 
         cls.user = User.objects.create_user(username='auth')
         cls.group = Group.objects.create(
@@ -48,6 +76,10 @@ class PostPagesTests(TestCase):
 
     def test_pages_users_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
+        post_pk = PostPagesTests.post_1.pk
+        user = PostPagesTests.user
+        group = PostPagesTests.group
+
         templates_pages_names = {
             reverse('posts:index'): 'posts/index.html',
             reverse('posts:group_list', kwargs={
@@ -57,7 +89,7 @@ class PostPagesTests(TestCase):
                 'post_id': f'{self.post.id}'
             }): 'posts/post_detail.html',
             reverse('posts:post_create'): 'posts/create_post.html',
-        }
+        },
 
         for reverse_name, template in templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):
@@ -206,11 +238,11 @@ class FollowTests(TestCase):
     def setUp(self):
         self.client_auth_follower = Client()
         self.client_auth_following = Client()
-        self.user_follower = User.objects.create_user(username='follower',
+        self.user_follower = User.objects.create_user(ввввввввввввввввввввввввввввв='follower',
                                                       email='test_11@mail.ru',
                                                       password='test_pass')
         self.user_following = User.objects.create_user(username='following',
-                                                       email='test22@mail.ru',
+                                                       email='test22@mail.ru',1
                                                        password='test_pass')
         self.post = Post.objects.create(
             author=self.user_following,
@@ -220,17 +252,17 @@ class FollowTests(TestCase):
         self.client_auth_following.force_login(self.user_following)
 
     def test_follow(self):
-        self.client_auth_follower.get(reverse('profile_follow',
+        self.client_auth_follower.get(reverse('posts:profile',
                                               kwargs={'username':
                                                           self.user_following.
                                               username}))
+
         self.assertEqual(Follow.objects.all().count(), 1)
 
     def test_unfollow(self):
         self.client_auth_follower.get(reverse('profile_follow',
                                               kwargs={'username':
                                                           self.user_following.
-                                              username}))
         self.client_auth_follower.get(reverse('profile_unfollow',
                                               kwargs={'username':
                                                           self.user_following.username}))
@@ -256,7 +288,7 @@ class FollowTests(TestCase):
             get(f'/following/{self.post.id}/')
         self.assertContains(response, 'тестовый комментарий')
         self.client_auth_following.logout()
-        self.client_auth_following.post(f'/following/{self.post.id}/comment',
+        self.client_auth_following.post(f'/following/{self.post.id}/comments',
                                         {'text': "комментарий от гостя"},
                                         follow=True)
         response = self.client_auth_following. \
