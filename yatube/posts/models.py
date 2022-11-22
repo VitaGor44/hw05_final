@@ -71,6 +71,3 @@ class Follow(models.Model):
                 name='user_author'
             )
         ]
-
-
-

@@ -20,11 +20,9 @@ def get_page_context(queryset, request):
         'page_obj': page_obj,
     }
 
-
 def index(request):
     context = get_page_context(Post.objects.all(), request)
     return render(request, 'posts/index.html', context)
-
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
@@ -36,13 +34,12 @@ def group_posts(request, slug):
     context.update(get_page_context(group.posts.all(), request))
     return render(request, 'posts/group_list.html', context)
 
-
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     following = (
-                        request.user.is_authenticated and Follow.objects.filter(
+            request.user.is_authenticated and Follow.objects.filter(
         user=request.user, author=author,
-    ).exists()
+            ).exists()
     )
     context = {
         'author': author,
@@ -50,7 +47,6 @@ def profile(request, username):
     }
     context.update(get_page_context(author.posts.all(), request))
     return render(request, 'posts/profile.html', context)
-
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
@@ -104,6 +100,7 @@ def post_edit(request, post_id):
                   {'form': form, 'is_edit': True, 'post_id': post_id}
                   )
 
+
 @login_required
 def add_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
@@ -115,18 +112,24 @@ def add_comment(request, post_id):
         comment.post = post
         comment.save()
         return redirect('posts:post_detail', post_id=post_id)
-    return render(request, 'posts/comments.html', {'form': form,
-                                                      "comments": comment_list})
+    return render(
+        request, 'posts/comments.html', {
+        'form': form, "comments": comment_list}
+    )
+
 
 @login_required
 def follow_index(request):
     # информация о текущем пользователе доступна в переменной request.user
-    list_of_posts = Post.objects.filter(author__following__user=request.user)
+    list_of_posts = Post.objects.filter(
+        author__following__user=request.user
+    )
     paginator = Paginator(list_of_posts, POST_PAGES)
     page_namber = request.GET.get('page')
     page = paginator.get_page(page_namber)
     context = {'page': page}
     return render(request, 'posts/follow.html', context)
+
 
 @login_required
 def profile_follow(request, username):
@@ -137,6 +140,7 @@ def profile_follow(request, username):
     if user != author and not is_follower.exists():
         Follow.objects.create(user=user, author=author)
     return redirect(reverse('posts:profile', args=[username]))
+
 
 @login_required
 def profile_unfollow(request, username):
@@ -151,10 +155,9 @@ def page_not_found(request, exception):
     # Переменная exception содержит отладочную информацию,
     # в шаблон пользовательской страницы 404 она не выводится
     return render(
-        request,
-        "core/404.html",
-        {"path": request.path},
-        status=404
+        request, "core/404.html", {
+            "path": request.path
+        }, status=404
     )
 
 def server_error(request):

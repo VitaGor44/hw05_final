@@ -234,16 +234,21 @@ class PaginatorViewsTest(TestCase):
         first_object = response.context['page_obj'][0]
         self.assertEqual(first_object.image, 'posts/small.gif')
 
+
 class FollowTests(TestCase):
     def setUp(self):
         self.client_auth_follower = Client()
         self.client_auth_following = Client()
-        self.user_follower = User.objects.create_user(ввввввввввввввввввввввввввввв='follower',
-                                                      email='test_11@mail.ru',
-                                                      password='test_pass')
-        self.user_following = User.objects.create_user(username='following',
-                                                       email='test22@mail.ru',1
-                                                       password='test_pass')
+        self.user_follower = User.objects.create_user(
+            username='follower',
+            email='test_11@mail.ru',
+            password='test_pass'
+        )
+        self.user_following = User.objects.create_user(
+            username='following',
+            email='test22@mail.ru',
+            password='test_pass'
+        )
         self.post = Post.objects.create(
             author=self.user_following,
             text='Тестовая запись для тестирования ленты'
@@ -265,7 +270,8 @@ class FollowTests(TestCase):
                                                           self.user_following.
         self.client_auth_follower.get(reverse('profile_unfollow',
                                               kwargs={'username':
-                                                          self.user_following.username}))
+                                                          self.user_following.
+                                              username})),
         self.assertEqual(Follow.objects.all().count(), 0)
 
     def test_subscription_feed(self):
@@ -323,4 +329,3 @@ class FollowTests(TestCase):
             cache.clear()
             third_state = self.authorized_client.get(reverse('posts:index'))
             self.assertNotEqual(first_state.content, third_state.content)
-
