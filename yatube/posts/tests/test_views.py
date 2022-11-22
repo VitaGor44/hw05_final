@@ -257,8 +257,8 @@ class FollowTests(TestCase):
     def test_follow(self):
         self.client_auth_follower.get(reverse('posts:profile',
                                               kwargs={'username':
-                                              self.user_following.
-                                       username}))
+                                                          self.user_following.
+                                              username}))
 
         self.assertEqual(Follow.objects.all().count(), 1)
 
