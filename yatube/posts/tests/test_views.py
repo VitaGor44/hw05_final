@@ -40,8 +40,6 @@ class PostPagesTests(TestCase):
             description="Тест | Описание группы 2",
             slug="test-slug-2"
         )
-
-
         settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
@@ -259,8 +257,8 @@ class FollowTests(TestCase):
     def test_follow(self):
         self.client_auth_follower.get(reverse('posts:profile',
                                               kwargs={'username':
-                                                          self.user_following.
-                                              username}))
+                                              self.user_following.
+                                       username}))
 
         self.assertEqual(Follow.objects.all().count(), 1)
 

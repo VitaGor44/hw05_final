@@ -20,9 +20,11 @@ def get_page_context(queryset, request):
         'page_obj': page_obj,
     }
 
+
 def index(request):
     context = get_page_context(Post.objects.all(), request)
     return render(request, 'posts/index.html', context)
+
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
@@ -34,12 +36,13 @@ def group_posts(request, slug):
     context.update(get_page_context(group.posts.all(), request))
     return render(request, 'posts/group_list.html', context)
 
+
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     following = (
-            request.user.is_authenticated and Follow.objects.filter(
-        user=request.user, author=author,
-            ).exists()
+        request.user.is_authenticated and Follow.objects.filter(
+            user=request.user, author=author,
+        ).exists()
     )
     context = {
         'author': author,
@@ -47,6 +50,7 @@ def profile(request, username):
     }
     context.update(get_page_context(author.posts.all(), request))
     return render(request, 'posts/profile.html', context)
+
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
@@ -114,7 +118,7 @@ def add_comment(request, post_id):
         return redirect('posts:post_detail', post_id=post_id)
     return render(
         request, 'posts/comments.html', {
-        'form': form, "comments": comment_list}
+            'form': form, "comments": comment_list}
     )
 
 
@@ -151,6 +155,7 @@ def profile_unfollow(request, username):
         is_follower.delete()
     return redirect('posts:profile', username=author)
 
+
 def page_not_found(request, exception):
     # Переменная exception содержит отладочную информацию,
     # в шаблон пользовательской страницы 404 она не выводится
@@ -160,8 +165,10 @@ def page_not_found(request, exception):
         }, status=404
     )
 
+
 def server_error(request):
-        return render(request, "core/500.html", status=500)
+    return render(request, "core/500.html", status=500)
+
 
 def permission_denied(request, exception):
     return render(request, 'core/403.html', status=403)
