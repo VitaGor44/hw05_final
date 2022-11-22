@@ -74,9 +74,6 @@ class PostPagesTests(TestCase):
 
     def test_pages_users_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
-        post_pk = PostPagesTests.post_1.pk
-        user = PostPagesTests.user
-        group = PostPagesTests.group
 
         templates_pages_names = {
             reverse('posts:index'): 'posts/index.html',
@@ -257,8 +254,8 @@ class FollowTests(TestCase):
     def test_follow(self):
         self.client_auth_follower.get(reverse('posts:profile',
                                               kwargs={'username':
-                                                         self.user_following.
-                                                         username}))
+                                                      self.user_following.
+                                                      username}))
 
         self.assertEqual(Follow.objects.all().count(), 1)
 
@@ -301,30 +298,30 @@ class FollowTests(TestCase):
         self.assertNotContains(response, 'комментарий от гостя')
 
 
-    class CacheTests(TestCase):
-        @classmethod
-        def setUpClass(cls):
-            super().setUpClass()
-            cls.post = Post.objects.create(
-                author=User.objects.create_user(username='test_name',
-                                                email='test@mail.ru',
-                                                password='test_pass', ),
-                text='Тестовая запись для создания поста')
+class CacheTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.post = Post.objects.create(
+            author=User.objects.create_user(username='test_name',
+                                            email='test@mail.ru',
+                                            password='test_pass', ),
+            text='Тестовая запись для создания поста')
 
-        def setUp(self):
-            self.guest_client = Client()
-            self.user = User.objects.create_user(username='VitaGor')
-            self.authorized_client = Client()
-            self.authorized_client.force_login(self.user)
+    def setUp(self):
+        self.guest_client = Client()
+        self.user = User.objects.create_user(username='VitaGor')
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
 
-        def test_cache_index(self):
-            """Тест кэширования страницы index.html"""
-            first_state = self.authorized_client.get(reverse('posts:index'))
-            post_1 = Post.objects.get(pk=1)
-            post_1.text = 'Измененный текст'
-            post_1.save()
-            second_state = self.authorized_client.get(reverse('posts:index'))
-            self.assertEqual(first_state.content, second_state.content)
-            cache.clear()
-            third_state = self.authorized_client.get(reverse('posts:index'))
-            self.assertNotEqual(first_state.content, third_state.content)
+    def test_cache_index(self):
+        """Тест кэширования страницы index.html"""
+        first_state = self.authorized_client.get(reverse('posts:index'))
+        post_1 = Post.objects.get(pk=1)
+        post_1.text = 'Измененный текст'
+        post_1.save()
+        second_state = self.authorized_client.get(reverse('posts:index'))
+        self.assertEqual(first_state.content, second_state.content)
+        cache.clear()
+        third_state = self.authorized_client.get(reverse('posts:index'))
+        self.assertNotEqual(first_state.content, third_state.content)
