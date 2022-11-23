@@ -224,7 +224,7 @@ class PaginatorViewsTest(TestCase):
         self.follower_client = Client()
         self.follower_client.force_login(self.follower)
         self.follower_client.get(reverse('posts:profile_follow',
-                                         kwargs={'username': self.user.username}))
+                                 kwargs={'username': self.user.username}))
 
     def test_first_page_contains_ten_posts(self):
         first_page_len_posts = 10
