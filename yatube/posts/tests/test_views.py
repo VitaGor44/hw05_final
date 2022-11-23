@@ -8,8 +8,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.cache import cache
 
-# from posts.apps import PostsConfig
-from ..models import Group, Post, User, Follow
+from ..models import Group, Post, User
 
 
 class PostPagesTests(TestCase):
@@ -63,8 +62,6 @@ class PostPagesTests(TestCase):
         super().tearDownClass()
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
 
-
-
     def setUp(self):
         # Авторизовываем пользователя
         self.authorized_client = Client()
@@ -75,9 +72,8 @@ class PostPagesTests(TestCase):
         self.follower_client = Client()
         self.follower_client.force_login(self.follower)
         self.follower_client.get(reverse('posts:profile_follow',
-                                         kwargs={'username': self.user.username}))
+                                 kwargs={'username': self.user.username}))
         cache.clear()
-
 
     def test_pages_users_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
@@ -125,9 +121,9 @@ class PostPagesTests(TestCase):
         """Шаблон группы"""
 
         context = {reverse('posts:group_list',
-                           kwargs={'slug': self.group.slug}): self.group,
+                   kwargs={'slug': self.group.slug}): self.group,
                    reverse('posts:group_slug',
-                           kwargs={'slug': self.group_fake.slug}): self.group_fake,
+                   kwargs={'slug': self.group_fake.slug}): self.group_fake,
                    }
         response = self.authorized_client.get(
             reverse('posts:group_list',
