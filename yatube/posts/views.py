@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect, reverse
+from django.http import HttpResponseRedirect
 
 from .forms import PostForm, CommentForm
 from .models import Post, Group, User, Follow
@@ -153,6 +154,15 @@ def profile_unfollow(request, username):
     if is_follower.exists():
         is_follower.delete()
     return redirect('posts:profile', username=author)
+
+
+@login_required
+def post_delete(request, username, post_id):
+    if request.user.username != username:
+        return redirect('posts:post', username, post_id)
+    post = get_object_or_404(Post, author__username=username, id=post_id)
+    post.delete()
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
 def page_not_found(request, exception):
