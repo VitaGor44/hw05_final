@@ -96,9 +96,9 @@ class PostPagesTests(TestCase):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
 
-    def test_index_page_show_correct_context(self):
+    def test_page_show_correct_context(self):
         context = {reverse('posts:index'): self.post,
-                   reverse('posts:group_slug',
+                   reverse('posts:group_list',
                            kwargs={'slug': self.group.slug,
                                    }): self.post,
                    reverse('posts:profile',
@@ -122,7 +122,7 @@ class PostPagesTests(TestCase):
 
         context = {reverse('posts:group_list',
                    kwargs={'slug': self.group.slug}): self.group,
-                   reverse('posts:group_slug',
+                   reverse('posts:group_list',
                    kwargs={'slug': self.group_fake.slug}): self.group_fake,
                    }
         response = self.authorized_client.get(
@@ -167,7 +167,7 @@ class PostPagesTests(TestCase):
 
     def test_forms_show_correct_instance(self):
         context = {
-            reverse('posts:create_post'),
+            reverse('posts:post_create'),
             reverse('posts:post_edit',
                     kwargs={'username': self.user.username,
                             'post_id': self.post.id,
@@ -226,7 +226,7 @@ class PaginatorViewsTest(TestCase):
         self.follower_client.get(reverse('posts:profile_follow',
                                  kwargs={'username': self.user.username}))
 
-    def test_first_page_contains_ten_posts(self):
+    def test_paginator_on_pages(self):
         first_page_len_posts = 10
         second_page_len_posts = 3
         context = {
