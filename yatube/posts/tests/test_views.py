@@ -24,11 +24,11 @@ class PostPagesTests(TestCase):
             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
             b'\x0A\x00\x3B'
         )
-        uploaded = SimpleUploadedFile(
-            name='small.gif',
-            content=small_gif,
-            content_type='image/gif'
-        )
+        # uploaded = SimpleUploadedFile(
+        #     name='small.gif',
+        #     content=small_gif,
+        #     content_type='image/gif'
+        # )
 
         cls.user = User.objects.create_user(username='auth')
         cls.group = Group.objects.create(
@@ -202,6 +202,7 @@ class PaginatorViewsTest(TestCase):
         first_object = response.context['page_obj'][0]
         self.assertEqual(first_object.image, 'posts/small.gif')
 
+
 class FollowTests(TestCase):
     def setUp(self):
         self.client_auth_follower = Client()
@@ -221,23 +222,22 @@ class FollowTests(TestCase):
 
     def test_follow(self):
         self.client_auth_follower.get(reverse('profile_follow',
-                                              kwargs={'username':
-                                                          self.user_following.
+                                      kwargs={'username': self.user_following.
                                               username}))
         self.assertEqual(Follow.objects.all().count(), 1)
 
     def test_unfollow(self):
         self.client_auth_follower.get(reverse('profile_follow',
-                                              kwargs={'username':
-                                                          self.user_following.
+                                      kwargs={'username': self.user_following.
                                               username}))
         self.client_auth_follower.get(reverse('profile_unfollow',
-                                              kwargs={'username':
-                                                          self.user_following.username}))
+                                      kwargs={'username': self.user_following.
+                                              username}))
         self.assertEqual(Follow.objects.all().count(), 0)
 
     def test_subscription_feed(self):
         """запись появляется в ленте подписчиков"""
+
         Follow.objects.create(user=self.user_follower,
                               author=self.user_following)
         response = self.client_auth_follower.get('/follow/')
@@ -264,31 +264,30 @@ class FollowTests(TestCase):
         self.assertNotContains(response, 'комментарий от гостя')
 
 
-    class CacheTests(TestCase):
-        @classmethod
-        def setUpClass(cls):
-            super().setUpClass()
-            cls.post = Post.objects.create(
-                author=User.objects.create_user(username='test_name',
-                                                email='test@mail.ru',
-                                                password='test_pass', ),
-                text='Тестовая запись для создания поста')
+class CacheTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.post = Post.objects.create(
+            author=User.objects.create_user(username='test_name',
+                                            email='test@mail.ru',
+                                            password='test_pass', ),
+            text='Тестовая запись для создания поста')
 
-        def setUp(self):
-            self.guest_client = Client()
-            self.user = User.objects.create_user(username='VitaGor')
-            self.authorized_client = Client()
-            self.authorized_client.force_login(self.user)
+    def setUp(self):
+        self.guest_client = Client()
+        self.user = User.objects.create_user(username='VitaGor')
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
 
-        def test_cache_index(self):
-            """Тест кэширования страницы index.html"""
-            first_state = self.authorized_client.get(reverse('posts:index'))
-            post_1 = Post.objects.get(pk=1)
-            post_1.text = 'Измененный текст'
-            post_1.save()
-            second_state = self.authorized_client.get(reverse('posts:index'))
-            self.assertEqual(first_state.content, second_state.content)
-            cache.clear()
-            third_state = self.authorized_client.get(reverse('posts:index'))
-            self.assertNotEqual(first_state.content, third_state.content)
-
+    def test_cache_index(self):
+        """Тест кэширования страницы index.html"""
+        first_state = self.authorized_client.get(reverse('posts:index'))
+        post_1 = Post.objects.get(pk=1)
+        post_1.text = 'Измененный текст'
+        post_1.save()
+        second_state = self.authorized_client.get(reverse('posts:index'))
+        self.assertEqual(first_state.content, second_state.content)
+        cache.clear()
+        third_state = self.authorized_client.get(reverse('posts:index'))
+        self.assertNotEqual(first_state.content, third_state.content)
