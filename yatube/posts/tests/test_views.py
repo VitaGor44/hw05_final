@@ -28,8 +28,6 @@ class PostPagesTests(TestCase):
         #     content=small_gif,
         #     content_type='image/gif'
         # )
-
-
         cls.user = User.objects.create_user(username='auth')
         cls.group = Group.objects.create(
             title='Тестовая группа',
