@@ -55,12 +55,12 @@ class PostPagesTests(TestCase):
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
         super().tearDownClass()
 
-def setUp(self):
-    self.guest_client = Client()
-    # Создаем авторизованный клиент
-    self.user = User.objects.create_user(username='VitaGor')
-    self.authorized_client = Client()
-    self.authorized_client.force_login(self.user)
+    def setUp(self):
+        self.guest_client = Client()
+        # Создаем авторизованный клиент
+        self.user = User.objects.create_user(username='VitaGor')
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
 
     def test_pages_users_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
@@ -75,7 +75,8 @@ def setUp(self):
             reverse('posts:post_create'): 'posts/create_post.html',
         }
 
-        # Проверяем, что при обращении к name вызывается соответствующий HTML-шаблон
+        # Проверяем, что при обращении к name
+        # вызывается соответствующий HTML-шаблон
         for reverse_name, template in templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
@@ -93,7 +94,8 @@ def setUp(self):
             'image': forms.fields.ImageField,
         }
 
-        # Проверяем, что типы полей формы в словаре context соответствуют ожиданиям
+        # Проверяем, что типы полей формы в словаре context
+        # соответствуют ожиданиям
         for value, expected in form_fields.items():
             with self.subTest(value=value):
                 form_field = response.context.get('form').fields.get(value)
@@ -207,7 +209,7 @@ class PaginatorViewsTest(TestCase):
         self.authorized_client.force_login(self.user)
 
     def test_first_page_contains_ten_posts(self):
-        COEFF_POSTS_PER_PAGE_1 = 10
+        # COEFF_POSTS_PER_PAGE_1 = 10
         list_urls = {
             reverse("posts:index"): "posts/index.html",
             reverse("posts:group_list", kwargs={
@@ -217,7 +219,7 @@ class PaginatorViewsTest(TestCase):
         for tested_url in list_urls.keys():
             response = self.client.get(tested_url)
             self.assertEqual(
-                len(response.context['page_obj']),10)
+                len(response.context['page_obj']), 10)
 
     def test_second_page_contains_three_posts(self):
         # COEFF_POSTS_PER_PAGE_2 = 3
@@ -233,7 +235,6 @@ class PaginatorViewsTest(TestCase):
             response = self.client.get(tested_url)
             self.assertEqual(
                 len(response.context['page_obj']), 3)
-
 
     def test_profile_page_context_with_image(self):
         response = self.authorized_client.get(

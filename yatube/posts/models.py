@@ -35,7 +35,7 @@ class Post(models.Model):
         'Картинка',
         upload_to='posts/',
         blank=True,
-        null = True
+        null=True
     )
 
     def __str__(self):
