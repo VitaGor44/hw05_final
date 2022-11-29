@@ -47,9 +47,9 @@ class PostCreateFormTests(TestCase):
         author_1 = User.objects.get(username='VitaGor')
         group_1 = Group.objects.get(title='Заголовок для тестовой группы')
         self.assertEqual(Post.objects.count(), count_posts + 1)
-        self.assertRedirects(response, reverse('posts:profile', kwargs={
-            'username': self.user.username})
-        )
+        self.assertRedirects(response, reverse('posts:index'))
+        # self.assertRedirects(response, reverse('posts:profile', kwargs={
+        #     'username': self.user.username})
         self.assertEqual(post_1.text, 'Данные из формы')
         self.assertEqual(author_1.username, 'VitaGor')
         self.assertEqual(group_1.title, 'Заголовок для тестовой группы')
@@ -88,6 +88,7 @@ class PostCreateFormTests(TestCase):
         response_edit = self.authorized_client.post(
             reverse('posts:post_edit',
                     kwargs={
+                        # 'username': post_2.author,
                         'post_id': post_2.id
                     }),
             data=form_data,

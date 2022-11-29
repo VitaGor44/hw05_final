@@ -5,6 +5,7 @@ User = get_user_model()
 
 
 class Group(models.Model):
+    objects = None
     id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True)
@@ -33,7 +34,8 @@ class Post(models.Model):
     image = models.ImageField(
         'Картинка',
         upload_to='posts/',
-        blank=True
+        blank=True,
+        null = True
     )
 
     def __str__(self):
@@ -59,6 +61,7 @@ class Comment(models.Model):
 
 
 class Follow(models.Model):
+    objects = None
     user = models.ForeignKey(User, on_delete=models.CASCADE,
                              related_name="follower")
     author = models.ForeignKey(User, on_delete=models.CASCADE,
