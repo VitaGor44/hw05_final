@@ -7,7 +7,12 @@ from .models import Post, Comment, Follow
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ('text', 'group', 'image')
+        fields = ['text', 'group', 'image']
+        labels = {'group': 'Группа', 'text': 'Сообщение',
+                  'image': 'Изображение'}
+        help_texts = {'group': 'Выберите группу',
+                      'text': 'Введите ссообщение',
+                      'image': 'Выберите изображение'}
 
 
 class CommentForm(forms.ModelForm):

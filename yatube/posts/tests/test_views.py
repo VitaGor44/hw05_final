@@ -1,22 +1,34 @@
 import shutil
 import tempfile
 
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django import forms
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.contrib.auth import get_user_model
 
 from ..models import Group, Post, User, Follow
 
 
-class PostPagesTests(TestCase):
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
+User = get_user_model()
+
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
+class PostURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
-        small_gif = (
+        cls.user = User.objects.create(username='auth')
+        cls.group = Group.objects.create(
+            title='Тестовая группа',
+            description='Тестовое описание',
+            slug='test-slug'
+        )
+
+
+        cls.small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
@@ -26,7 +38,7 @@ class PostPagesTests(TestCase):
         )
         uploaded = SimpleUploadedFile(
             name='small.gif',
-            content=small_gif,
+            content=cls.small_gif,
             content_type='image/gif'
         )
 
@@ -274,7 +286,20 @@ class CacheTests(TestCase):
         self.assertNotEqual(first_state.content, third_state.content)
 
 
-class FollowTests(TestCase):
+class FollowViewsTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.author = User.objects.create(
+            username='posts_author',
+        )
+        cls.follower = User.objects.create(
+            username='follower',
+        )
+        cls.post = Post.objects.create(
+            author=FollowViewsTest.author,
+            text='Рандомный текст статьи',
+        )
     def setUp(self):
         self.client_auth_follower = Client()
         self.client_auth_following = Client()

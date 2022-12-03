@@ -2,6 +2,7 @@ import shutil
 import tempfile
 
 from django.conf import settings
+from django.contrib.auth.views import redirect_to_login
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -47,7 +48,7 @@ class PostCreateFormTests(TestCase):
         author_1 = User.objects.get(username='VitaGor')
         group_1 = Group.objects.get(title='Заголовок для тестовой группы')
         self.assertEqual(Post.objects.count(), count_posts + 1)
-        self.assertRedirects(response, reverse('posts:index'))
+        self.assertRedirects(response, redirect_to_login(next=reverse('posts:post_create')).url)
         # self.assertRedirects(response, reverse('posts:profile', kwargs={
         #     'username': self.user.username})
         self.assertEqual(post_1.text, 'Данные из формы')
