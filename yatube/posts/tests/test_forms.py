@@ -2,7 +2,7 @@ import shutil
 import tempfile
 
 from django.conf import settings
-from django.contrib.auth.views import redirect_to_login
+# from django.contrib.auth.views import redirect_to_login
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse

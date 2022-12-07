@@ -15,6 +15,7 @@ from ..models import Group, Post, User, Follow
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 User = get_user_model()
 
+
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostPagesTests(TestCase):
     @classmethod
@@ -75,9 +76,9 @@ class PostPagesTests(TestCase):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
 
-
     # Проверяем, что словарь context страницы /task
     # в первом элементе списка object_list содержит ожидаемые значения
+
     def test_index_page_show_correct_context(self):
         """Шаблон index сформирован с правильным контекстом."""
         response = self.authorized_client.get(reverse('posts:index'))
@@ -99,7 +100,6 @@ class PostPagesTests(TestCase):
                          'Тестовая группа')
         self.assertEqual(post_author_0, self.user.username)
         self.assertEqual(post_group_0, self.group.title)
-
 
     def test_group_pages_show_correct_context(self):
         """Шаблон группы"""
