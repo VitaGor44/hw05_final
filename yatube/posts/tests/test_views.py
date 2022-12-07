@@ -16,17 +16,10 @@ TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 User = get_user_model()
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
-class PostURLTests(TestCase):
+class PostPagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create(username='auth')
-        cls.group = Group.objects.create(
-            title='Тестовая группа',
-            description='Тестовое описание',
-            slug='test-slug'
-        )
-
 
         cls.small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
@@ -42,35 +35,23 @@ class PostURLTests(TestCase):
             content_type='image/gif'
         )
 
-        cls.post = Post.objects.create(
-            author=User.objects.create_user(username='test_name1',
-                                            email='test1@mail.ru',
-                                            password='test_pass', ),
-            text='Тестовая запись для создания 1 поста',
-            group=Group.objects.create(
-                title='Заголовок для 1 тестовой группы',
-                slug='test_slug1'),
-            image=uploaded)
-
-        cls.post = Post.objects.create(
-            author=User.objects.create_user(username='test_name2',
-                                            email='test2@mail.ru',
-                                            password='test_pass', ),
-            text='Тестовая запись для создания 2 поста',
-            group=Group.objects.create(
-                title='Заголовок для 2 тестовой группы',
-                slug='test_slug2')
+        cls.user = User.objects.create(username='auth')
+        cls.group = Group.objects.create(
+            title='Тестовая группа',
+            description='Тестовое описание',
+            slug='test-slug'
         )
 
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
-        super().tearDownClass()
+        cls.post = Post.objects.create(
+            author=cls.user,
+            text='Тестовая группа',
+            group=cls.group,
+            image=uploaded)
 
     def setUp(self):
         self.guest_client = Client()
         # Создаем авторизованный клиент
-        self.user = User.objects.create_user(username='VitaGor')
+        # self.user = User.objects.create_user(username='VitaGor')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
@@ -94,26 +75,6 @@ class PostURLTests(TestCase):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
 
-    # Проверка словаря контекста главной страницы (в нём передаётся форма)
-    def test_index_page_form_show_correct_context(self):
-        response = self.authorized_client.get(reverse('posts:index'))
-        form_fields = {
-            'title': forms.fields.CharField,
-            # При создании формы поля модели типа TextField
-            # преобразуются в CharField с виджетом forms.Textarea
-            'text': forms.fields.CharField,
-            'slug': forms.fields.SlugField,
-            'image': forms.fields.ImageField,
-        }
-
-        # Проверяем, что типы полей формы в словаре context
-        # соответствуют ожиданиям
-        for value, expected in form_fields.items():
-            with self.subTest(value=value):
-                form_field = response.context.get('form').fields.get(value)
-                # Проверяет, что поле формы является экземпляром
-                # указанного класса
-                self.assertIsInstance(form_field, expected)
 
     # Проверяем, что словарь context страницы /task
     # в первом элементе списка object_list содержит ожидаемые значения
@@ -122,16 +83,23 @@ class PostURLTests(TestCase):
         response = self.authorized_client.get(reverse('posts:index'))
         # Взяли первый элемент из списка и проверили, что его содержание
         # совпадает с ожидаемым
-        first_object = response.context['page'][0]
+        first_object = response.context['page_obj'][0]
         post_text_0 = first_object.text
         post_author_0 = first_object.author.username
         post_group_0 = first_object.group.title
-        post_image_0 = Post.objects.first().image
+        # post_image_0 = Post.objects.first()
+        # self.assertEqual(post_text_0,
+        #                  'Тестовая запись для создания 1 поста')
+        # self.assertEqual(post_author_0, 'test_name1')
+        # self.assertEqual(post_group_0, 'Заголовок для 1 тестовой группы')
+        # self.assertEqual(post_image_0, 'posts/small.gif')
+        post_author_0 = first_object.author.username
+        post_group_0 = first_object.group.title
         self.assertEqual(post_text_0,
-                         'Тестовая запись для создания 2 поста')
-        self.assertEqual(post_author_0, 'test_name2')
-        self.assertEqual(post_group_0, 'Заголовок для 2 тестовой группы')
-        self.assertEqual(post_image_0, 'posts/small.gif')
+                         'Тестовая группа')
+        self.assertEqual(post_author_0, self.user.username)
+        self.assertEqual(post_group_0, self.group.title)
+
 
     def test_group_pages_show_correct_context(self):
         """Шаблон группы"""
@@ -145,14 +113,14 @@ class PostURLTests(TestCase):
         group_slug_0 = first_object.slug
         post_image_0 = Post.objects.first().image
         self.assertEqual(post_image_0, 'posts/small.gif')
-        self.assertEqual(group_title_0, 'Заголовок для 2 тестовой группы')
-        self.assertEqual(group_slug_0, 'test_slug2')
+        self.assertEqual(group_title_0, 'Тестовая группа')
+        self.assertEqual(group_slug_0, 'test-slug')
 
     def test_post_another_group(self):
         """Пост не попал в другую группу"""
         response = self.authorized_client.get(
             reverse('posts:group_list', kwargs={'slug': self.group.slug}))
-        first_object = response.context["page"][0]
+        first_object = response.context['page_obj'][0]
         post_text_0 = first_object.text
         self.assertTrue(post_text_0, 'Тестовая запись для создания 2 поста')
 
@@ -174,10 +142,10 @@ class PostURLTests(TestCase):
                 'username': self.user.username
             })
         )
-        first_object = response.context["page"][0]
+        first_object = response.context['page_obj'][0]
         post_text_0 = first_object.text
-        post_image_0 = Post.objects.first().image
-        self.assertEqual(post_image_0, 'posts/small.gif')
+        # post_image_0 = Post.objects.first().image
+        # self.assertEqual(post_image_0, 'posts/small.gif')
         self.assertEqual(response.context['author'], self.user)
         self.assertEqual(post_text_0, self.post.text)
 
@@ -194,10 +162,10 @@ class PostURLTests(TestCase):
 class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
-        COUNT_OF_POST = 13
-
         super().setUpClass()
         cls.author = User.objects.create_user(username='test_name',)
+
+        COUNT_OF_POST = 13
         cls.group = Group.objects.create(
             title='Заголовок для тестовой группы',
             slug='test_slug2',
@@ -221,7 +189,7 @@ class PaginatorViewsTest(TestCase):
         self.authorized_client.force_login(self.user)
 
     def test_first_page_contains_ten_posts(self):
-        # COEFF_POSTS_PER_PAGE_1 = 10
+        COEFF_POSTS_PER_PAGE_1 = 10
         list_urls = {
             reverse("posts:index"): "posts/index.html",
             reverse("posts:group_list", kwargs={
@@ -231,10 +199,12 @@ class PaginatorViewsTest(TestCase):
         for tested_url in list_urls.keys():
             response = self.client.get(tested_url)
             self.assertEqual(
-                len(response.context['page_obj']), 10)
+                len(response.context['page_obj']),
+                COEFF_POSTS_PER_PAGE_1
+            )
 
     def test_second_page_contains_three_posts(self):
-        # COEFF_POSTS_PER_PAGE_2 = 3
+        COEFF_POSTS_PER_PAGE_2 = 3
 
         list_urls = {
             reverse("posts:index") + "?page=2": "index",
@@ -246,15 +216,86 @@ class PaginatorViewsTest(TestCase):
         for tested_url in list_urls.keys():
             response = self.client.get(tested_url)
             self.assertEqual(
-                len(response.context['page_obj']), 3)
+                len(response.context['page_obj']),
+                COEFF_POSTS_PER_PAGE_2
+            )
 
     def test_profile_page_context_with_image(self):
         response = self.authorized_client.get(
             reverse('posts:profile', args=[self.user])
         )
+        # self.auth.post(
+        #     reverse("posts:profile_follow", args=(self.user.username,)),
+        # )
         self.assertIn('page_obj', response.context)
         first_object = response.context['page_obj'][0]
         self.assertEqual(first_object.image, 'posts/small.gif')
+
+
+class FollowViewsTest(TestCase):
+    def setUp(self):
+        self.client_auth_follower = Client()
+        self.client_auth_following = Client()
+        self.user_follower = User.objects.create_user(username='follower',
+                                                      email='test_11@mail.ru',
+                                                      password='test_pass')
+        self.user_following = User.objects.create_user(username='following',
+                                                       email='test22@mail.ru',
+                                                       password='test_pass')
+        self.post = Post.objects.create(
+            author=self.user_following,
+            text='Тестовая запись для тестирования ленты'
+        )
+        self.client_auth_follower.force_login(self.user_follower)
+        self.client_auth_following.force_login(self.user_following)
+
+    def test_follow(self):
+        self.client_auth_follower.get(reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.user_following.username})
+        )
+        self.assertEqual(Follow.objects.all().count(), 1)
+
+    def test_unfollow(self):
+        self.client_auth_follower.get(reverse('posts:profile_follow',
+                                      kwargs={'username': self.user_following.
+                                              username}))
+        self.client_auth_follower.get(reverse('posts:profile_unfollow',
+                                      kwargs={'username': self.user_following.
+                                              username}))
+        self.assertEqual(Follow.objects.all().count(), 0)
+
+    def test_subscription_feed(self):
+        """запись появляется в ленте подписчиков"""
+
+        Follow.objects.create(user=self.user_follower,
+                              author=self.user_following)
+        response = self.client_auth_follower.get('/follow/')
+        post_text_0 = response.context["page_obj"][0].text
+        self.assertEqual(post_text_0, 'Тестовая запись для тестирования ленты')
+        # в качестве неподписанного пользователя проверяем собственную ленту
+        response = self.client_auth_following.get('/follow/')
+        self.assertNotContains(response,
+                               'Тестовая запись для тестирования ленты')
+
+    def test_add_comment(self):
+        self.client_auth_following.post(f'/following/{self.post.id}/comment',
+                                        {'text': "тестовый комментарий"},
+                                        follow=True)
+        response = self.client_auth_following.get(
+            f'/following/{self.post.id}/'
+        )
+        self.assertContains(response, 'тестовый комментарий')
+        self.client_auth_following.logout()
+        self.client_auth_following.post(
+            f'/following/{self.post.id}/comment',
+            {'text': "комментарий от гостя"},
+            follow=True
+        )
+        response = self.client_auth_following.get(
+            f'/following/{self.post.id}/'
+        )
+        self.assertNotContains(response, 'комментарий от гостя')
 
 
 class CacheTests(TestCase):
@@ -284,77 +325,3 @@ class CacheTests(TestCase):
         cache.clear()
         third_state = self.authorized_client.get(reverse('posts:index'))
         self.assertNotEqual(first_state.content, third_state.content)
-
-
-class FollowViewsTest(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.author = User.objects.create(
-            username='posts_author',
-        )
-        cls.follower = User.objects.create(
-            username='follower',
-        )
-        cls.post = Post.objects.create(
-            author=FollowViewsTest.author,
-            text='Рандомный текст статьи',
-        )
-    def setUp(self):
-        self.client_auth_follower = Client()
-        self.client_auth_following = Client()
-        self.user_follower = User.objects.create_user(username='follower',
-                                                      email='test_11@mail.ru',
-                                                      password='test_pass')
-        self.user_following = User.objects.create_user(username='following',
-                                                       email='test22@mail.ru',
-                                                       password='test_pass')
-        self.post = Post.objects.create(
-            author=self.user_following,
-            text='Тестовая запись для тестирования ленты'
-        )
-        self.client_auth_follower.force_login(self.user_follower)
-        self.client_auth_following.force_login(self.user_following)
-
-    def test_follow(self):
-        self.client_auth_follower.get(reverse('profile_follow',
-                                      kwargs={'username': self.user_following.
-                                              username}))
-        self.assertEqual(Follow.objects.all().count(), 1)
-
-    def test_unfollow(self):
-        self.client_auth_follower.get(reverse('profile_follow',
-                                      kwargs={'username': self.user_following.
-                                              username}))
-        self.client_auth_follower.get(reverse('profile_unfollow',
-                                      kwargs={'username': self.user_following.
-                                              username}))
-        self.assertEqual(Follow.objects.all().count(), 0)
-
-    def test_subscription_feed(self):
-        """запись появляется в ленте подписчиков"""
-
-        Follow.objects.create(user=self.user_follower,
-                              author=self.user_following)
-        response = self.client_auth_follower.get('/follow/')
-        post_text_0 = response.context["page"][0].text
-        self.assertEqual(post_text_0, 'Тестовая запись для тестирования ленты')
-        # в качестве неподписанного пользователя проверяем собственную ленту
-        response = self.client_auth_following.get('/follow/')
-        self.assertNotContains(response,
-                               'Тестовая запись для тестирования ленты')
-
-    def test_add_comment(self):
-        self.client_auth_following.post(f'/following/{self.post.id}/comment',
-                                        {'text': "тестовый комментарий"},
-                                        follow=True)
-        response = self.client_auth_following. \
-            get(f'/following/{self.post.id}/')
-        self.assertContains(response, 'тестовый комментарий')
-        self.client_auth_following.logout()
-        self.client_auth_following.post(f'/following/{self.post.id}/comment',
-                                        {'text': "комментарий от гостя"},
-                                        follow=True)
-        response = self.client_auth_following. \
-            get(f'/following/{self.post.id}/')
-        self.assertNotContains(response, 'комментарий от гостя')
