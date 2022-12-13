@@ -1,12 +1,17 @@
-from django.test import TestCase, Client
+import shutil
+import tempfile
+
+from django.test import TestCase, Client, override_settings
 from http import HTTPStatus
 from django.urls import reverse
+from django.conf import settings
 
 from ..models import Group, Post, User
 
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 POST_TEXT_MULTIPLY = 15
 
-
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -38,6 +43,11 @@ class PostURLTests(TestCase):
             f'/posts/{cls.post.id}/edit/': 'posts/create_post.html',
             '/create/': 'posts/create_post.html'
         }
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
 
     def setUp(self):
         self.guest_client = Client()

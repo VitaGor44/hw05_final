@@ -2,7 +2,6 @@ import shutil
 import tempfile
 
 from django.conf import settings
-# from django.contrib.auth.views import redirect_to_login
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -10,9 +9,10 @@ from posts.models import Group, Post, User
 from http import HTTPStatus
 
 
+
 class PostCreateFormTests(TestCase):
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         super().setUpClass()
         settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         cls.group = Group.objects.create(
@@ -26,10 +26,12 @@ class PostCreateFormTests(TestCase):
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
         super().tearDownClass()
 
+
     def setUp(self):
         self.guest_client = Client()
         # Создаём авторизованный клиент
         self.user = User.objects.create_user(username='VitaGor')
+
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
