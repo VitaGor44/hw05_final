@@ -11,6 +11,7 @@ from ..models import Group, Post, User
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 POST_TEXT_MULTIPLY = 15
 
+
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostURLTests(TestCase):
     @classmethod

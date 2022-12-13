@@ -23,6 +23,7 @@ class PostViewsTests(TestCase):
     INDEX_URL = (reverse('posts:index'),
                  'posts/index.html',
                  '?page=2',)
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -175,7 +176,9 @@ class PostViewsTests(TestCase):
         post = mixer.blend(Post)
         content = self.authorized_client.get(constants.INDEX_URL[0]).content
         post.delete
-        content_after_delete = self.authorized_client.get(constants.INDEX_URL[0]).content
+        content_after_delete = self.authorized_client.get(
+            constants.INDEX_URL[0]
+        ).content
         self.assertEqual(content, content_after_delete)
         cache.clear()
         content_after_cacheclear = self.authorized_client.get(
@@ -233,7 +236,6 @@ class PaginatorViewsTest(TestCase):
         self.user = User.objects.create_user(username='VitaGor')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
-
 
     def test_first_page_contains_ten_posts(self):
         COEFF_POSTS_PER_PAGE_1 = 10
@@ -372,4 +374,3 @@ class FollowViewsTest(TestCase):
     #     cache.clear()
     #     third_state = self.authorized_client.get(reverse('posts:index'))
     #     self.assertNotEqual(first_state.content, third_state.content)
-

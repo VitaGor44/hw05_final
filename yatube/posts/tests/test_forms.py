@@ -9,7 +9,6 @@ from posts.models import Group, Post, User
 from http import HTTPStatus
 
 
-
 class PostCreateFormTests(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -25,7 +24,6 @@ class PostCreateFormTests(TestCase):
     def tearDownClass(cls):
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
         super().tearDownClass()
-
 
     def setUp(self):
         self.guest_client = Client()
