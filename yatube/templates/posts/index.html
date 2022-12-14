@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
+{% load cache %}
 {% block title %}Последние обновления на сайте{% endblock %}
 {% block content %}
 {% load thumbnail %}
+  {% cache 20 index_page page_obj.number %}
 
 <!--<h1>Последние обновления на сайте</h1>-->
   {% for post in page_obj %}
@@ -29,4 +31,5 @@
     {% if not forloop.last %}<hr>{% endif %}
   {% endfor %}
 {% include 'includes/paginator.html' %}
+{% endcache %}
 {% endblock %}

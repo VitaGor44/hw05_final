@@ -80,7 +80,7 @@ class PostURLTests(TestCase):
 
         for value, expected in test_dict.items():
             with self.subTest(value=value):
-                self.assertEquals(value, expected)
+                self.assertEqual(value, expected)
 
     def test_new_url_redirect_anonymous(self):
         """Страница /create/ перенаправляет анонимного пользователя."""
