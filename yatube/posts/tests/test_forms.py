@@ -27,7 +27,9 @@ class PostCreateFormTests(TestCase):
 
     def setUp(self):
         self.guest_client = Client()
-        # Создаём авторизованный клиент
+        """
+        Создание авторизованного клиента
+        """
         self.user = User.objects.create_user(username='VitaGor')
 
         self.authorized_client = Client()
@@ -53,14 +55,14 @@ class PostCreateFormTests(TestCase):
             args=(self.user.username,),
         ),
         )
-        # self.assertRedirects(response, reverse('posts:profile', kwargs={
-        #     'username': self.user.username})
         self.assertEqual(post_1.text, 'Данные из формы')
         self.assertEqual(author_1.username, 'VitaGor')
         self.assertEqual(group_1.title, 'Заголовок для тестовой группы')
 
     def test_guest_new_post(self):
-        # неавторизоанный не может создавать посты
+        """
+        Неавторизоанный клиент не может создавать посты
+        """
         form_data = {
             'text': 'Пост от неавторизованного пользователя',
             'group': self.group.id
@@ -74,7 +76,9 @@ class PostCreateFormTests(TestCase):
             text='Пост от неавторизованного пользователя').exists())
 
     def test_authorized_edit_post(self):
-        # авторизованный может редактировать
+        """
+        Aвторизованный клиент может редактировать посты
+        """
         form_data = {
             'text': 'Данные из формы',
             'group': self.group.id
@@ -93,7 +97,6 @@ class PostCreateFormTests(TestCase):
         response_edit = self.authorized_client.post(
             reverse('posts:post_edit',
                     kwargs={
-                        # 'username': post_2.author,
                         'post_id': post_2.id
                     }),
             data=form_data,

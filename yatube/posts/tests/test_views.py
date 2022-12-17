@@ -10,15 +10,14 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
 from mixer.backend.django import mixer
 
-from posts.tests import constants
+from . import common_constants
 from ..models import Group, Post, Follow
 
 
-TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 User = get_user_model()
 
 
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
+@override_settings(MEDIA_ROOT=common_constants.TEMP_MEDIA_ROOT)
 class PostViewsTests(TestCase):
     INDEX_URL = (reverse('posts:index'),
                  'posts/index.html',
@@ -27,7 +26,7 @@ class PostViewsTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
+        settings.MEDIA_ROOT = common_constants.TEMP_MEDIA_ROOT
         cls.small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -57,8 +56,6 @@ class PostViewsTests(TestCase):
 
     def setUp(self):
         self.guest_client = Client()
-        # Создаем авторизованный клиент
-        # self.user = User.objects.create_user(username='VitaGor')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
@@ -83,31 +80,16 @@ class PostViewsTests(TestCase):
             reverse('posts:post_create'): 'posts/create_post.html',
         }
 
-        # Проверяем, что при обращении к name
-        # вызывается соответствующий HTML-шаблон
         for reverse_name, template in templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
 
-    # Проверяем, что словарь context страницы /task
-    # в первом элементе списка object_list содержит ожидаемые значения
-
     def test_index_page_show_correct_context(self):
         """Шаблон index сформирован с правильным контекстом."""
         response = self.authorized_client.get(reverse('posts:index'))
-        # Взяли первый элемент из списка и проверили, что его содержание
-        # совпадает с ожидаемым
         first_object = response.context['page_obj'][0]
         post_text_0 = first_object.text
-        # post_author_0 = first_object.author.username
-        # post_group_0 = first_object.group.title
-        # post_image_0 = Post.objects.first()
-        # self.assertEqual(post_text_0,
-        #                  'Тестовая запись для создания 1 поста')
-        # self.assertEqual(post_author_0, 'test_name1')
-        # self.assertEqual(post_group_0, 'Заголовок для 1 тестовой группы')
-        # self.assertEqual(post_image_0, 'posts/small.gif')
         post_author_0 = first_object.author.username
         post_group_0 = first_object.group.title
         self.assertEqual(post_text_0,
@@ -167,39 +149,6 @@ class PostViewsTests(TestCase):
         self.authorized_client.get(reverse('posts:post_detail', kwargs={
             'post_id': Post.objects.first().id}))
 
-    def test_cache_index(self):
-        """
-        Список записей страницы index хранится в кеше и обновлялся
-        раз в 20 секунд.
-        """
-
-        post = mixer.blend(Post)
-        content = self.authorized_client.get(constants.INDEX_URL[0]).content
-        post.delete
-        content_after_delete = self.authorized_client.get(
-            constants.INDEX_URL[0]
-        ).content
-        self.assertEqual(content, content_after_delete)
-        cache.clear()
-        content_after_cacheclear = self.authorized_client.get(
-            constants.INDEX_URL[0],
-        ).content
-        self.assertNotEqual(content, content_after_cacheclear)
-
-    # def test_cache_index(self):
-    # """
-    # ЭТО ЗДЕСЬ ТАК БЫЛО У МЕНЯ!!!
-    # """
-    #     """Тест кэширования страницы index.html"""
-    #     first_state = self.authorized_client.get(reverse('posts:index'))
-    #     post_1 = Post.objects.get(pk=1)
-    #     post_1.text = 'Измененный текст'
-    #     post_1.save()
-    #     second_state = self.authorized_client.get(reverse('posts:index'))
-    #     self.assertEqual(first_state.content, second_state.content)
-    #     cache.clear()
-    #     third_state = self.authorized_client.get(reverse('posts:index'))
-    #     self.assertNotEqual(first_state.content, third_state.content)
 
     @classmethod
     def tearDownClass(cls):
@@ -269,17 +218,6 @@ class PaginatorViewsTest(TestCase):
                 COEFF_POSTS_PER_PAGE_2
             )
 
-    # def test_profile_page_context_with_image(self):
-    #     response = self.authorized_client.get(
-    #         reverse('posts:profile', args=[self.user])
-    #     )
-    #     self.authorized_client.post(
-    #         reverse("posts:profile_follow", args=(self.user.username,)),
-    #     )
-    #     self.assertIn('page_obj', response.context)
-    #     first_object = response.context['page_obj'][0].image
-    #     self.assertEqual(first_object.image, 'posts/small.gif')
-
 
 class FollowViewsTest(TestCase):
     def setUp(self):
@@ -299,6 +237,11 @@ class FollowViewsTest(TestCase):
         self.client_auth_following.force_login(self.user_following)
 
     def test_follow(self):
+        """Авторизованный пользователь может подписываться и отписываться"""
+        self.assertEqual(
+            Follow.objects.filter(user=self.user_follower).count(),
+            0,
+        )
         self.client_auth_follower.get(reverse(
             'posts:profile_follow',
             kwargs={'username': self.user_following.username})
@@ -306,6 +249,11 @@ class FollowViewsTest(TestCase):
         self.assertEqual(Follow.objects.all().count(), 1)
 
     def test_unfollow(self):
+        """
+        Новая запись  появляется в ленте тех пользователей, кто на него
+        подписан и не появляется у тех в ленте, кто не подписан.
+        """
+        Follow.objects.create(user=self.user_follower, author=self.user_following)
         self.client_auth_follower.get(reverse('posts:profile_follow',
                                       kwargs={'username': self.user_following.
                                               username}))
@@ -322,55 +270,41 @@ class FollowViewsTest(TestCase):
         response = self.client_auth_follower.get('/follow/')
         post_text_0 = response.context["page_obj"][0].text
         self.assertEqual(post_text_0, 'Тестовая запись для тестирования ленты')
-        # в качестве неподписанного пользователя проверяем собственную ленту
         response = self.client_auth_following.get('/follow/')
         self.assertNotContains(response,
                                'Тестовая запись для тестирования ленты')
 
-    # def test_add_comment(self):
-    #     self.client_auth_following.post(f'/following/{self.post.id}/comment',
-    #                                     {'text': "тестовый комментарий"},
-    #                                     follow=True)
-    #     response = self.client_auth_following.get(
-    #         f'/following/{self.post.id}/'
-    #     )
-    #     self.assertContains(response, 'тестовый комментарий')
-    #     self.client_auth_following.logout()
-    #     self.client_auth_following.post(
-    #         f'/following/{self.post.id}/comment',
-    #         {'text': "комментарий от гостя"},
-    #         follow=True
-    #     )
-    #     response = self.client_auth_following.get(
-    #         f'/following/{self.post.id}/'
-    #     )
-    #     self.assertNotContains(response, 'комментарий от гостя')
+class CacheTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.post = Post.objects.create(
+            author=User.objects.create_user(username='test_name',
+                                            email='test@mail.ru',
+                                            password='test_pass', ),
+            text='Тестовая запись для создания поста')
 
+    def setUp(self):
+        self.guest_client = Client()
+        self.user = User.objects.create_user(username='VitaGor')
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
 
-# class CacheTests(TestCase):
-#     @classmethod
-#     def setUpClass(cls):
-#         super().setUpClass()
-#         cls.post = Post.objects.create(
-#             author=User.objects.create_user(username='test_name',
-#                                             email='test@mail.ru',
-#                                             password='test_pass', ),
-#             text='Тестовая запись для создания поста')
-#
-#     def setUp(self):
-#         self.guest_client = Client()
-#         self.user = User.objects.create_user(username='VitaGor')
-#         self.authorized_client = Client()
-#         self.authorized_client.force_login(self.user)
+    def test_cache_index(self):
+        """
+        Список записей страницы index хранится в кеше и обновлялся
+        раз в 20 секунд.
+        """
 
-    # def test_cache_index(self):
-    #     """Тест кэширования страницы index.html"""
-    #     first_state = self.authorized_client.get(reverse('posts:index'))
-    #     post_1 = Post.objects.get(pk=1)
-    #     post_1.text = 'Измененный текст'
-    #     post_1.save()
-    #     second_state = self.authorized_client.get(reverse('posts:index'))
-    #     self.assertEqual(first_state.content, second_state.content)
-    #     cache.clear()
-    #     third_state = self.authorized_client.get(reverse('posts:index'))
-    #     self.assertNotEqual(first_state.content, third_state.content)
+        post = mixer.blend(Post)
+        content = self.authorized_client.get(common_constants.INDEX_URL[0]).content
+        post.delete
+        content_after_delete = self.authorized_client.get(
+            common_constants.INDEX_URL[0]
+        ).content
+        self.assertEqual(content, content_after_delete)
+        cache.clear()
+        content_after_cacheclear = self.authorized_client.get(
+            common_constants.INDEX_URL[0],
+        ).content
+        self.assertNotEqual(content, content_after_cacheclear)

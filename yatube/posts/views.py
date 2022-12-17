@@ -1,19 +1,19 @@
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
-from django.shortcuts import render, get_object_or_404, redirect, reverse
 from django.http import HttpResponseRedirect
+from http import HTTPStatus
+from django.shortcuts import render, get_object_or_404, redirect, reverse
 
+from django.core.paginator import Paginator
 from .forms import PostForm, CommentForm
 from .models import Post, Group, User, Follow
-from django.core.mail import send_mail
 
 
 POST_PAGES = 10
 
 
-def get_page_context(queryset, request):
-    paginator = Paginator(queryset, POST_PAGES)
-    page_number = request.GET.get('page')
+def get_page_context(request, queryset):
+    paginator = Paginator(request, POST_PAGES)
+    page_number = queryset.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return {
         'paginator': paginator,
@@ -55,24 +55,14 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    count = post.author.posts.select_related().count()
-    is_edit = post.author == request.user
+    count = post.author.posts.count()
     context = {
         'post': get_object_or_404(Post, pk=post_id),
         'count': count,
-        'is_edit': is_edit,
+        'is_edit': post.author == request.user,
         'comment_form': CommentForm(),
     }
     return render(request, 'posts/post_detail.html', context)
-
-
-send_mail(
-    'Тема письма',
-    'Текст письма.',
-    'from@example.com',  # Это поле "От кого"
-    ['to@example.com'],  # Это поле "Кому" (можно указать список адресов)
-    fail_silently=False,  # Сообщать об ошибках («молчать ли об ошибках?»)
-)
 
 
 @login_required
@@ -137,22 +127,25 @@ def follow_index(request):
 
 @login_required
 def profile_follow(request, username):
-    # Подписаться на автора
+    """
+    Подписка на автора
+    """
     user = request.user
     author = get_object_or_404(User, username=username)
     is_follower = Follow.objects.filter(user=user, author=author)
     if user != author and not is_follower.exists():
-        Follow.objects.create(user=user, author=author)
+        Follow.objects.get_or_create(user=request.user, author=author)
     return redirect(reverse('posts:profile', args=[username]))
 
 
 @login_required
 def profile_unfollow(request, username):
-    # Дизлайк, отписка
+    """
+    Дизлайк, отписка
+    """
     author = get_object_or_404(User, username=username)
     is_follower = Follow.objects.filter(user=request.user, author=author)
-    if is_follower.exists():
-        is_follower.delete()
+    is_follower.delete()
     return redirect('posts:profile', username=author)
 
 
@@ -164,16 +157,12 @@ def post_delete(request, username, post_id):
     post.delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-
 def page_not_found(request, exception):
-    # Переменная exception содержит отладочную информацию,
-    # в шаблон пользовательской страницы 404 она не выводится
     return render(
         request, "core/404.html", {
             "path": request.path
-        }, status=404
+        }, status=HTTPStatus.NOT_FOUND
     )
-
 
 def server_error(request):
     return render(request, "core/500.html", status=500)
