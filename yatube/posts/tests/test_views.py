@@ -149,7 +149,6 @@ class PostViewsTests(TestCase):
         self.authorized_client.get(reverse('posts:post_detail', kwargs={
             'post_id': Post.objects.first().id}))
 
-
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(settings.MEDIA_ROOT,
@@ -253,7 +252,8 @@ class FollowViewsTest(TestCase):
         Новая запись  появляется в ленте тех пользователей, кто на него
         подписан и не появляется у тех в ленте, кто не подписан.
         """
-        Follow.objects.create(user=self.user_follower, author=self.user_following)
+        Follow.objects.create(user=self.user_follower,
+                              author=self.user_following)
         self.client_auth_follower.get(reverse('posts:profile_follow',
                                       kwargs={'username': self.user_following.
                                               username}))
@@ -273,6 +273,7 @@ class FollowViewsTest(TestCase):
         response = self.client_auth_following.get('/follow/')
         self.assertNotContains(response,
                                'Тестовая запись для тестирования ленты')
+
 
 class CacheTests(TestCase):
     @classmethod
@@ -297,7 +298,9 @@ class CacheTests(TestCase):
         """
 
         post = mixer.blend(Post)
-        content = self.authorized_client.get(common_constants.INDEX_URL[0]).content
+        content = self.authorized_client.get(
+            common_constants.INDEX_URL[0]
+        ).content
         post.delete
         content_after_delete = self.authorized_client.get(
             common_constants.INDEX_URL[0]

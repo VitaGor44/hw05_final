@@ -108,7 +108,7 @@ def add_comment(request, post_id):
         comment.save()
         return redirect('posts:post_detail', post_id=post_id)
     return render(
-        request, 'posts/comments.html', {
+        request, 'posts/include/comments.html', {
             'form': form, "comments": comment_list}
     )
 
@@ -157,12 +157,14 @@ def post_delete(request, username, post_id):
     post.delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+
 def page_not_found(request, exception):
     return render(
         request, "core/404.html", {
             "path": request.path
         }, status=HTTPStatus.NOT_FOUND
     )
+
 
 def server_error(request):
     return render(request, "core/500.html", status=500)
