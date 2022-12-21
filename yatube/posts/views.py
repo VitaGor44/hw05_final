@@ -1,11 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
-from http import HTTPStatus
-from django.db.models import QuerySet
-from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect, reverse
 
-from django.core.paginator import Paginator, Page
+from django.core.paginator import Paginator
 from .forms import PostForm, CommentForm
 from .models import Post, Group, User, Follow
 from .utils import paginate_page
@@ -152,19 +149,3 @@ def post_delete(request, username, post_id):
     post = get_object_or_404(Post, author__username=username, id=post_id)
     post.delete()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-
-# def page_not_found(request, exception):
-#     return render(
-#         request, "core/404.html", {
-#             "path": request.path
-#         }, status=HTTPStatus.NOT_FOUND
-#     )
-#
-#
-# def server_error(request):
-#     return render(request, "core/500.html", status=HTTPStatus.INTERNAL_SERVER_ERROR)
-#
-#
-# def permission_denied(request, exception):
-#     return render(request, 'core/403.html', status=HTTPStatus.FORBIDDEN)
