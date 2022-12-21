@@ -1,11 +1,14 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from http import HTTPStatus
+from django.db.models import QuerySet
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect, reverse
 
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, Page
 from .forms import PostForm, CommentForm
 from .models import Post, Group, User, Follow
+from .utils import paginate_page
 
 
 POST_PAGES = 10
@@ -115,13 +118,9 @@ def add_comment(request, post_id):
 
 @login_required
 def follow_index(request):
-    posts_list = Post.objects.filter(
-        author__following__user=request.user.id
-    ).select_related('author', 'group')
-    page_obj = Paginator(posts_list, POST_PAGES)
-    page_number = request.GET.get('page')
-    page = page_obj.get_page(page_number)
-    context = {'page_obj': page}
+    posts = Post.objects.filter(author__following__user=request.user)
+    page_obj = paginate_page(request, posts)
+    context = {'page_obj': page_obj}
     return render(request, 'posts/follow.html', context)
 
 
@@ -130,11 +129,8 @@ def profile_follow(request, username):
     """
     Подписка на автора
     """
-    user = request.user
     author = get_object_or_404(User, username=username)
-    is_follower = Follow.objects.filter(user=user, author=author)
-    if user != author and not is_follower.exists():
-        Follow.objects.get_or_create(user=request.user, author=author)
+    Follow.objects.get_or_create(user=request.user, author=author)
     return redirect(reverse('posts:profile', args=[username]))
 
 
@@ -158,17 +154,17 @@ def post_delete(request, username, post_id):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-def page_not_found(request, exception):
-    return render(
-        request, "core/404.html", {
-            "path": request.path
-        }, status=HTTPStatus.NOT_FOUND
-    )
-
-
-def server_error(request):
-    return render(request, "core/500.html", status=500)
-
-
-def permission_denied(request, exception):
-    return render(request, 'core/403.html', status=403)
+# def page_not_found(request, exception):
+#     return render(
+#         request, "core/404.html", {
+#             "path": request.path
+#         }, status=HTTPStatus.NOT_FOUND
+#     )
+#
+#
+# def server_error(request):
+#     return render(request, "core/500.html", status=HTTPStatus.INTERNAL_SERVER_ERROR)
+#
+#
+# def permission_denied(request, exception):
+#     return render(request, 'core/403.html', status=HTTPStatus.FORBIDDEN)

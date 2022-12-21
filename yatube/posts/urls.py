@@ -2,8 +2,9 @@ from django.urls import path
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
+from posts.apps import PostsConfig
 
-app_name = 'posts'
+app_name = PostsConfig.name
 
 urlpatterns = [
     path("", views.index, name="index"),
@@ -17,8 +18,8 @@ urlpatterns = [
     path("profile/<str:username>/", views.profile, name="profile"),
     path("posts/<int:post_id>/", views.post_detail, name="post_detail"),
     path("posts/<int:post_id>/edit/", views.post_edit, name="post_edit"),
-    path("404/", views.page_not_found, name="404"),
-    path("500/", views.server_error, name="500"),
+    # path("404/", views.page_not_found, name="404"),
+    # path("500/", views.server_error, name="500"),
     path('posts/<int:post_id>/comment/',
          views.add_comment, name='add_comment'),
     path("<str:username>/<int:post_id>/delete/", views.post_delete,
